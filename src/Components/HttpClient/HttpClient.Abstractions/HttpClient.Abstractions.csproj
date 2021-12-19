@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>netstandard2.0</TargetFramework>
+        <AssemblyName>SourceGeneratorPower.HttpClient.Abstractions</AssemblyName>
+        <RootNamespace>SourceGeneratorPower.HttpClient</RootNamespace>
+        <LangVersion>latest</LangVersion>
+    </PropertyGroup>
+
+</Project>
