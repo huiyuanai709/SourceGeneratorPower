@@ -11,5 +11,17 @@ namespace HttpClientSample.API;
 public interface IJsonServerApi
 {
     [HttpGet("/todos/{id}")]
-    Task<TodoResponse> Get([Ignore] int id, CancellationToken cancellationToken = default);
+    Task<Todo> Get(int id, CancellationToken cancellationToken = default);
+
+    [HttpPost(("/todos"))]
+    Task<Todo> Post(CreateTodo createTodo, CancellationToken cancellationToken = default);
+
+    [HttpPut("/todos/{todo.Id}")]
+    Task<Todo> Put(Todo todo, CancellationToken cancellationToken);
+
+    [HttpPatch("/todos/{id}")]
+    Task<Todo> Patch(int id, Todo todo, CancellationToken cancellationToken);
+
+    [HttpDelete("/todos/{id}")]
+    Task<object> Delete(int id, CancellationToken cancellationToken);
 }
