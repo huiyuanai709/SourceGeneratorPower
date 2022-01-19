@@ -1,15 +1,15 @@
-# SourceGeneratorPower.Options
+## SourceGeneratorPower.Options
 
 SourceGeneratorPower.Options is used C# roslyn's Source Generator feature to auto inject Options class which marked by OptionAttribute. It is convenient to develop, almost no loss of performance.
 
-## Installation
+### Installation
 
 ```C#
 dotnet add package SourceGeneratorPower.Options.Abstractions
 dotnet add package SourceGeneratorPower.Options.SourceGenerator
 ```
 
-## Usages
+### Usages
 
 1. Marked Option class with OptionAttribute and Configuration section key
 ```C#
@@ -39,3 +39,9 @@ service.AutoInjectOptions(Configuration);
 ```
 
 Then build solution
+
+### Changelog
+
+v1.1.0
+1. Add Project Reference support
+2. Add Nested Class support
