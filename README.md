@@ -3,8 +3,8 @@
 
 ## Components
 
-* [SourceGeneratorPower.Options](#SourceGeneratorPower.Options)
-* [SourceGeneratorPower.HttpClient](#SourceGeneratorPower.HttpClient)
+* [SourceGeneratorPower.Options](#sourcegeneratorpoweroptions)
+* [SourceGeneratorPower.HttpClient](#sourcegeneratorpowerhttpClient)
 
 ## SourceGeneratorPower.Options
 
