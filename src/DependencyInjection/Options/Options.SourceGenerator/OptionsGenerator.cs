@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Text;
 using Microsoft.CodeAnalysis;
@@ -22,12 +23,19 @@ namespace SourceGeneratorPower.Options
                 return;
             }
 
+            var optionsVisitor = new OptionsVisitor();
+            foreach (var assemblySymbol in context.Compilation.SourceModule.ReferencedAssemblySymbols
+                         .Where(x => x.Identity.PublicKeyToken == ImmutableArray<byte>.Empty))
+            {
+                assemblySymbol.Accept(optionsVisitor);
+            }
+
+            receiver.TypeSymbols.AddRange(optionsVisitor.GetOptionsTypes());
+
             INamedTypeSymbol attributeSymbol =
                 context.Compilation.GetTypeByMetadataName("SourceGeneratorPower.Options.OptionAttribute");
 
             StringBuilder source = new StringBuilder($@"
-using Microsoft.Extensions.Configuration;
-
 namespace Microsoft.Extensions.DependencyInjection
 {{
     public static class ScanInjectOptions
@@ -35,10 +43,10 @@ namespace Microsoft.Extensions.DependencyInjection
         public static void AutoInjectOptions(this IServiceCollection services, IConfiguration configuration)
         {{
 ");
-            foreach (ITypeSymbol typeSymbol in receiver.TypeSymbols)
+            foreach (var symbol in receiver.TypeSymbols)
             {
                 source.Append(' ', 12);
-                source.AppendLine(ProcessOptions(typeSymbol, attributeSymbol));
+                source.AppendLine(ProcessOptions(symbol, attributeSymbol));
             }
 
             source.Append(' ', 8).AppendLine("}")
@@ -58,19 +66,69 @@ namespace Microsoft.Extensions.DependencyInjection
 
         class OptionsSyntax : ISyntaxContextReceiver
         {
-            public List<ITypeSymbol> TypeSymbols { get; set; } = new List<ITypeSymbol>();
+            public List<ISymbol> TypeSymbols { get; set; } = new List<ISymbol>();
 
             public void OnVisitSyntaxNode(GeneratorSyntaxContext context)
             {
                 if (context.Node is ClassDeclarationSyntax cds && cds.AttributeLists.Count > 0)
                 {
-                    ITypeSymbol typeSymbol = context.SemanticModel.GetDeclaredSymbol(cds) as ITypeSymbol;
+                    var typeSymbol = context.SemanticModel.GetDeclaredSymbol(cds);
                     if (typeSymbol!.GetAttributes().Any(x =>
                             x.AttributeClass!.ToDisplayString() ==
                             "SourceGeneratorPower.Options.OptionAttribute"))
                     {
                         TypeSymbols.Add(typeSymbol);
                     }
+                }
+            }
+        }
+
+        class OptionsVisitor : SymbolVisitor
+        {
+            private readonly HashSet<INamedTypeSymbol> _optionsTypeSymbols;
+
+            public OptionsVisitor()
+            {
+                _optionsTypeSymbols = new HashSet<INamedTypeSymbol>(SymbolEqualityComparer.Default);
+            }
+
+            public ImmutableArray<INamedTypeSymbol> GetOptionsTypes() => _optionsTypeSymbols.ToImmutableArray();
+
+            public override void VisitAssembly(IAssemblySymbol symbol)
+            {
+                symbol.GlobalNamespace.Accept(this);
+            }
+
+            public override void VisitNamespace(INamespaceSymbol symbol)
+            {
+                foreach (var namespaceOrTypeSymbol in symbol.GetMembers())
+                {
+                    namespaceOrTypeSymbol.Accept(this);
+                }
+            }
+
+            public override void VisitNamedType(INamedTypeSymbol symbol)
+            {
+                if (symbol.DeclaredAccessibility != Accessibility.Public)
+                {
+                    return;
+                }
+
+                if (symbol.GetAttributes().Any(x =>
+                        x.AttributeClass!.ToDisplayString() == "SourceGeneratorPower.Options.OptionAttribute"))
+                {
+                    _optionsTypeSymbols.Add(symbol);
+                }
+
+                var nestedTypes = symbol.GetMembers();
+                if (nestedTypes.IsDefaultOrEmpty)
+                {
+                    return;
+                }
+
+                foreach (var nestedType in nestedTypes)
+                {
+                    nestedType.Accept(this);
                 }
             }
         }
