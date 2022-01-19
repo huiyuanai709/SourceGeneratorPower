@@ -1,14 +1,14 @@
-# SourceGeneratorPower.HttpClient
+## SourceGeneratorPower.HttpClient
 
 SourceGeneratorPower.HttpClient is used C# roslyn's Source Generator feature to auto implement HTTP API Caller interface, It depends on IHttpClientFactory to create HttpClient to sending request and receive response with System.Text.Json.
-## Installation
+### Installation
 
 ```C#
 dotnet add package SourceGeneratorPower.HttpClient.Abstractions
 dotnet add package SourceGeneratorPower.HttpClient.SourceGenerator
 ```
 
-## Usages
+### Usages
 
 1. Marked interface with HttpClientAttribute and given HttpClient name
 ```C#
@@ -34,7 +34,7 @@ UsingAttribute
 
 Then build solution
 
-## Changelog
+### Changelog
 
 v1.1.0
 1. Add Project Reference support
