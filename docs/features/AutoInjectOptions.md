@@ -42,6 +42,6 @@ Then build solution
 
 ### Changelog
 
-v1.1.0
+v1.1.1
 1. Add Project Reference support
 2. Add Nested Class support

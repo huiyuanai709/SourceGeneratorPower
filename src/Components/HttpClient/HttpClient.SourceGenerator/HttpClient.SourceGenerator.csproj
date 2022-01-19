@@ -5,7 +5,7 @@
         <AssemblyName>SourceGeneratorPower.HttpClient.SourceGenerator</AssemblyName>
         <RootNamespace>SourceGeneratorPower.HttpClient</RootNamespace>
         <LangVersion>8.0</LangVersion>
-        <Version>1.1.0</Version>
+        <Version>1.1.1</Version>
         <IncludeBuildOutput>false</IncludeBuildOutput>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
         <Description>SourceGeneratorPower.HttpClient is used C# roslyn's Source Generator feature to auto implement HTTP API Caller interface, It depends on IHttpClientFactory to create HttpClient to sending request and receive response with System.Text.Json.</Description>
