@@ -26,6 +26,12 @@ namespace SourceGeneratorPower.HttpClient
             }
 
             var httpClientVisitor = new HttpClientVisitor();
+            foreach (var assemblySymbol in context.Compilation.SourceModule.ReferencedAssemblySymbols
+                         .Where(x => x.Identity.PublicKeyToken == ImmutableArray<byte>.Empty))
+            {
+                assemblySymbol.Accept(httpClientVisitor);
+            }
+
             receiver.TypeSymbols.AddRange(httpClientVisitor.GetHttpClientTypes());
             var extensionSource = new StringBuilder($@"
 using SourceGeneratorPower.HttpClient;
