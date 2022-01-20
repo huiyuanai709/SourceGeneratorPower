@@ -36,6 +36,8 @@ namespace SourceGeneratorPower.Options
                 context.Compilation.GetTypeByMetadataName("SourceGeneratorPower.Options.OptionAttribute");
 
             StringBuilder source = new StringBuilder($@"
+using Microsoft.Extensions.Configuration;
+
 namespace Microsoft.Extensions.DependencyInjection
 {{
     public static class ScanInjectOptions
