@@ -51,9 +51,8 @@ See document [auto inject options](docs/features/AutoInjectOptions.md)
 
 ### Changelog
 
-v1.1.0
-1. Add Project Reference support
-2. Add Nested Class support
+v1.1.3
+1. Fix namespace conflict with `global::`
 
 ## SourceGeneratorPower.HttpClient
 
@@ -93,9 +92,8 @@ Then build solution
 
 ### Changelog
 
-v1.1.0
-1. Add Project Reference support
-2. Add Nested Interface support
+v1.1.3
+1. Fix namespace conflict with `global::`
 
 
 

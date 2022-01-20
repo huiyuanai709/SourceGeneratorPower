@@ -36,6 +36,5 @@ Then build solution
 
 ### Changelog
 
-v1.1.1
-1. Add Project Reference support
-2. Add Nested Interface support
+v1.1.3
+1. Fix namespace conflict with `global::`

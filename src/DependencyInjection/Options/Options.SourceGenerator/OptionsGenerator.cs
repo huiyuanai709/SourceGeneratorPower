@@ -63,7 +63,7 @@ namespace Microsoft.Extensions.DependencyInjection
             AttributeData attributeData = typeSymbol.GetAttributes()
                 .Single(ad => ad.AttributeClass!.Equals(attributeSymbol, SymbolEqualityComparer.Default));
             TypedConstant path = attributeData.ConstructorArguments.First();
-            return $@"services.Configure<{typeSymbol.ToDisplayString()}>(configuration.GetSection(""{path.Value}""));";
+            return $@"services.Configure<global::{typeSymbol.ToDisplayString()}>(configuration.GetSection(""{path.Value}""));";
         }
 
         class OptionsSyntax : ISyntaxContextReceiver
