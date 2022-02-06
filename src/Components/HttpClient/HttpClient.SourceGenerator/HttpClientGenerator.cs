@@ -27,7 +27,7 @@ namespace SourceGeneratorPower.HttpClient
 
             var httpClientVisitor = new HttpClientVisitor();
             foreach (var assemblySymbol in context.Compilation.SourceModule.ReferencedAssemblySymbols
-                         .Where(x => x.Identity.PublicKeyToken == ImmutableArray<byte>.Empty))
+                         .Where(x => x.Identity.PublicKey == ImmutableArray<byte>.Empty))
             {
                 assemblySymbol.Accept(httpClientVisitor);
             }
@@ -120,26 +120,22 @@ namespace {typeSymbol.ContainingNamespace.ToDisplayString()}
                 }
 
                 var (httpMethod, requestUri) = GetHttpMethod(methodSymbol);
-                if (httpMethod is null)
+                switch (httpMethod)
                 {
-                    continue;
+                    case null:
+                        continue;
+                    case "Get":
+                        source.AppendLine(GenerateGetMethod(typeSymbol, methodSymbol, httpClientName, requestUri));
+                        continue;
+                    case "Delete":
+                        source.AppendLine(GenerateDeleteMethod(typeSymbol, methodSymbol, httpClientName, httpMethod,
+                            requestUri));
+                        continue;
+                    default:
+                        source.AppendLine(GenerateOtherMethod(typeSymbol, methodSymbol, httpClientName, httpMethod,
+                            requestUri));
+                        break;
                 }
-
-                if (httpMethod == "Get")
-                {
-                    source.AppendLine(GenerateGetMethod(typeSymbol, methodSymbol, httpClientName, requestUri));
-                    continue;
-                }
-
-                if (httpMethod == "Delete")
-                {
-                    source.AppendLine(GenerateDeleteMethod(typeSymbol, methodSymbol, httpClientName, httpMethod,
-                        requestUri));
-                    continue;
-                }
-
-                source.AppendLine(GenerateOtherMethod(typeSymbol, methodSymbol, httpClientName, httpMethod,
-                    requestUri));
             }
 
             return source.ToString();

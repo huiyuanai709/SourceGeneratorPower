@@ -3,7 +3,7 @@
 namespace SourceGeneratorPower.HttpClient
 {
     /// <summary>
-    /// Identity a class which will be implemented by SourceGenerator
+    /// Identity a interface which will be implemented by SourceGenerator
     /// </summary>
     [AttributeUsage(AttributeTargets.Interface)]
     public class HttpClientAttribute : Attribute
