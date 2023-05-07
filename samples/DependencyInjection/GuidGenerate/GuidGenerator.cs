@@ -64,3 +64,18 @@ public class TransientGuidGenerator : ITransientGuidGenerator
         return _guid.ToString();
     }
 }
+
+[ScopedService]
+public interface IGenericService<T>
+{
+    string GetName();
+}
+
+[ScopedService]
+public class GenericService<T> : IGenericService<T>
+{
+    public string GetName()
+    {
+        return typeof(T).Name;
+    }
+}
