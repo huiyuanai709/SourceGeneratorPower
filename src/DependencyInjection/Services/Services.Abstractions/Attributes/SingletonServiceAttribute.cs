@@ -2,6 +2,9 @@
 
 namespace SourceGeneratorPower.Services.Attributes
 {
+    /// <summary>
+    /// Mark a class/interface as a singleton service
+    /// </summary>
     public class SingletonServiceAttribute : ServiceAttribute
     {
         public SingletonServiceAttribute() : base(ServiceLifetime.Singleton)

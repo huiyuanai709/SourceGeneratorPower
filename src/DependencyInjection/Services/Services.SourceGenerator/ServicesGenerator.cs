@@ -1,7 +1,9 @@
 ﻿using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
@@ -41,7 +43,7 @@ namespace Microsoft.Extensions.DependencyInjection
             {
                 if (symbol.Key.TypeKind == TypeKind.Interface && symbol.Value.ConstructorArguments.IsDefaultOrEmpty)
                 {
-                    puredServiceTypes.Add(symbol.Key, symbol.Value);
+                    puredServiceTypes.Add(symbol.Key.CompatibleWithGenericType(), symbol.Value);
                     continue;
                 }
 
@@ -50,15 +52,11 @@ namespace Microsoft.Extensions.DependencyInjection
             }
 
             var serviceTypes = CollectServiceImplementDescriptor(context, puredServiceTypes);
-            foreach (var keyValuePair in puredServiceTypes)
+            foreach (var serviceDescriptor in serviceTypes.Values)
             {
-                if (!serviceTypes.TryGetValue(keyValuePair.Key, out var serviceDescriptor))
-                {
-                    return;
-                }
-
                 source.Append(' ', 12).Append(PrintServiceDescriptor(serviceDescriptor));
             }
+
 
             source.Append(' ', 8).AppendLine("}")
                 .Append(' ', 4).AppendLine("}")
@@ -108,7 +106,7 @@ namespace Microsoft.Extensions.DependencyInjection
                     foreach (var type in serviceDescriptor.ImplementTypeSymbols)
                     {
                         stringBuilder.AppendLine(
-                            $"services.AddTransient(typeof(global::{serviceDescriptor.ServiceTypeSymbol.ToDisplayString()}), typeof(global::{type.ToDisplayString()}));");
+                            $"services.AddTransient(typeof(global::{serviceDescriptor.ServiceTypeSymbol.CompatibleWithGenericType().ToDisplayString()}), typeof(global::{type.CompatibleWithGenericType().ToDisplayString()}));");
                     }
 
                     break;
@@ -116,7 +114,7 @@ namespace Microsoft.Extensions.DependencyInjection
                     foreach (var type in serviceDescriptor.ImplementTypeSymbols)
                     {
                         stringBuilder.AppendLine(
-                            $"services.AddScoped(typeof(global::{serviceDescriptor.ServiceTypeSymbol.ToDisplayString()}), typeof(global::{type.ToDisplayString()}));");
+                            $"services.AddScoped(typeof(global::{serviceDescriptor.ServiceTypeSymbol.CompatibleWithGenericType().ToDisplayString()}), typeof(global::{type.CompatibleWithGenericType().ToDisplayString()}));");
                     }
 
                     break;
@@ -124,7 +122,7 @@ namespace Microsoft.Extensions.DependencyInjection
                     foreach (var type in serviceDescriptor.ImplementTypeSymbols)
                     {
                         stringBuilder.AppendLine(
-                            $"services.AddSingleton(typeof(global::{serviceDescriptor.ServiceTypeSymbol.ToDisplayString()}), typeof(global::{type.ToDisplayString()}));");
+                            $"services.AddSingleton(typeof(global::{serviceDescriptor.ServiceTypeSymbol.CompatibleWithGenericType().ToDisplayString()}), typeof(global::{type.CompatibleWithGenericType().ToDisplayString()}));");
                     }
 
                     break;
@@ -137,15 +135,15 @@ namespace Microsoft.Extensions.DependencyInjection
         {
             if (attributeData.ConstructorArguments.IsDefaultOrEmpty)
             {
-                return new List<ServiceDescriptor>
+                return symbol.AllInterfaces.Select(x => x.CompatibleWithGenericType()).Concat(new []{symbol}).Select(x => new ServiceDescriptor
                 {
-                    new()
+                    ServiceTypeSymbol = x,
+                    ImplementTypeSymbols = new SortedSet<INamedTypeSymbol>
                     {
-                        ServiceTypeSymbol = symbol,
-                        ImplementTypeSymbols = new SortedSet<INamedTypeSymbol>() { symbol },
-                        AttributeData = attributeData
-                    }
-                };
+                        symbol
+                    },
+                    AttributeData = attributeData
+                }).ToList();
             }
 
             var types = attributeData.ConstructorArguments.First().Values;
@@ -157,7 +155,7 @@ namespace Microsoft.Extensions.DependencyInjection
                     {
                         ServiceTypeSymbol = symbol,
                         ImplementTypeSymbols =
-                            new SortedSet<INamedTypeSymbol>(types.Select(x => x.Value as INamedTypeSymbol)),
+                            new SortedSet<INamedTypeSymbol>(types.Select(x => (x.Value as INamedTypeSymbol))),
                         AttributeData = attributeData
                     }
                 };
@@ -286,24 +284,14 @@ namespace Microsoft.Extensions.DependencyInjection
                     return;
                 }
 
-                foreach (var typeSymbol in symbol.AllInterfaces)
+                foreach (var typeSymbol in symbol.AllInterfaces.Select(x => x.CompatibleWithGenericType()))
                 {
-                    if (!_serviceSymbols.TryGetValue(typeSymbol, out var attributeData)) continue;
-                    if (_serviceDescriptors.TryGetValue(typeSymbol, out var serviceDescriptor))
+                    if (!_serviceSymbols.TryGetValue(typeSymbol, out var attributeData))
                     {
-                        serviceDescriptor.ImplementTypeSymbols.Add(symbol);
                         continue;
                     }
 
-                    _serviceDescriptors.Add(typeSymbol, new ServiceDescriptor
-                    {
-                        ServiceTypeSymbol = typeSymbol,
-                        ImplementTypeSymbols = new SortedSet<INamedTypeSymbol>()
-                        {
-                            symbol
-                        },
-                        AttributeData = attributeData
-                    });
+                    CollectServiceDescriptor(symbol, typeSymbol, attributeData);
                 }
 
                 var nestedTypes = symbol.GetMembers();
@@ -316,6 +304,25 @@ namespace Microsoft.Extensions.DependencyInjection
                 {
                     nestedType.Accept(this);
                 }
+            }
+
+            private void CollectServiceDescriptor(INamedTypeSymbol symbol, INamedTypeSymbol typeSymbol, AttributeData attributeData)
+            {
+                if (_serviceDescriptors.TryGetValue(typeSymbol, out var serviceDescriptor))
+                {
+                    serviceDescriptor.ImplementTypeSymbols.Add(symbol);
+                    return;
+                }
+
+                _serviceDescriptors.Add(typeSymbol, new ServiceDescriptor
+                {
+                    ServiceTypeSymbol = typeSymbol,
+                    ImplementTypeSymbols = new SortedSet<INamedTypeSymbol>()
+                    {
+                        symbol
+                    },
+                    AttributeData = attributeData
+                });
             }
         }
     }
